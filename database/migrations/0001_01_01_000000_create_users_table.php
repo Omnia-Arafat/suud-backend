@@ -17,8 +17,29 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            
+            // Role-based fields
+            $table->enum('role', ['employee', 'employer', 'admin'])->default('employee');
+            
+            // Profile fields (nullable for all users)
+            $table->string('specialization')->nullable(); // For employees
+            $table->string('university')->nullable(); // For employees
+            $table->text('profile_summary')->nullable(); // For all users
+            $table->string('avatar_path')->nullable(); // Profile picture
+            $table->string('cv_path')->nullable(); // For employees
+            $table->string('phone')->nullable();
+            $table->string('location')->nullable();
+            
+            // Status and activity fields
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('last_login_at')->nullable();
+            
             $table->rememberToken();
             $table->timestamps();
+            
+            // Indexes for performance
+            $table->index('role');
+            $table->index('is_active');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
