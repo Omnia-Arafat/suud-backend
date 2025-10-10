@@ -21,6 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             \App\Http\Middleware\HandleApiExceptions::class,
         ]);
+        
+        // Register role-based middleware
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'employee' => \App\Http\Middleware\EmployeeMiddleware::class,
+            'employer' => \App\Http\Middleware\EmployerMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
