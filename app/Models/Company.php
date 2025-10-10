@@ -54,6 +54,14 @@ class Company extends Model
     }
 
     /**
+     * Alias for jobListings - for backward compatibility
+     */
+    public function jobs(): HasMany
+    {
+        return $this->jobListings();
+    }
+
+    /**
      * Get the full logo URL
      */
     public function getLogoUrlAttribute(): ?string

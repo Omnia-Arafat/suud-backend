@@ -255,6 +255,6 @@ class JobListing extends Model
      */
     public function getRouteKeyName(): string
     {
-        return 'slug';
+        return 'id';
     }
 }
