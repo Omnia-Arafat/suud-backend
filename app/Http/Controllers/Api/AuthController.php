@@ -430,11 +430,16 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
+        $user = $request->user();
+        
+        // Load relationships based on role
+        if ($user->isEmployer()) {
+            $user->load('company');
+        }
+        
         return response()->json([
             'success' => true,
-            'data' => [
-                'user' => $request->user()
-            ]
+            'data' => $user
         ]);
     }
 }
