@@ -26,3 +26,4 @@ Route::get('/docs/postman', function () {
         ['Content-Type' => 'application/json']
     );
 })->name('postman.collection');
+
