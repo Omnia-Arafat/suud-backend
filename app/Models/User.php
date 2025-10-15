@@ -87,6 +87,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get notifications for this user
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
      * Check if user is an employee
      */
     public function isEmployee(): bool

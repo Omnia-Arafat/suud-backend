@@ -3,62 +3,62 @@
 namespace App\Http\Controllers;
 
 /**
- * @OpenApi\Info(
- *     title="SU'UD API Documentation",
+ * @OA\Info(
+ *     title="SU'UD Job Portal API",
  *     version="1.0.0",
- *     description="API documentation for the SU'UD project - A comprehensive solution for user management and authentication",
- *     @OpenApi\Contact(
- *         email="support@suud.com",
- *         name="SU'UD Support Team"
+ *     description="Complete API documentation for the SU'UD Job Portal platform. This API provides comprehensive job management, user authentication, application tracking, and administrative features for a modern job portal platform.",
+ *     @OA\Contact(
+ *         email="admin@suud.sa",
+ *         name="SU'UD Development Team"
+ *     ),
+ *     @OA\License(
+ *         name="Private License",
+ *         url=""
  *     )
  * )
- * 
- * @OpenApi\Server(
+ * )
+ * @OA\Server(
  *     url="http://localhost:8000",
  *     description="Local Development Server"
  * )
- * 
- * @OpenApi\Server(
- *     url="https://api.suud.com",
+ * @OA\Server(
+ *     url="https://api.suud.sa",
  *     description="Production Server"
  * )
- * 
- * @OpenApi\SecurityScheme(
+ * @OA\SecurityScheme(
  *     securityScheme="sanctum",
  *     type="http",
+ *     description="Laravel Sanctum Bearer Token Authentication",
  *     scheme="bearer",
- *     bearerFormat="JWT",
- *     description="Laravel Sanctum Bearer Token"
+ *     bearerFormat="JWT"
  * )
- * 
- * @OpenApi\Tag(
- *     name="Authentication",
- *     description="User authentication and authorization endpoints"
- * )
- * 
- * @OpenApi\Tag(
- *     name="Users",
- *     description="User management endpoints"
- * )
- * 
- * @OpenApi\Tag(
+ * @OA\Tag(
  *     name="System",
- *     description="System information and health check endpoints"
+ *     description="System health and information endpoints"
  * )
- * 
- * @OpenApi\Tag(
+ * @OA\Tag(
+ *     name="Authentication",
+ *     description="User authentication and token management"
+ * )
+ * @OA\Tag(
  *     name="Jobs",
- *     description="Job listings management endpoints"
+ *     description="Public job listings and search functionality"
  * )
- * 
- * @OpenApi\Tag(
+ * @OA\Tag(
  *     name="Applications",
- *     description="Job applications management endpoints"
+ *     description="Job application management for employees and employers"
  * )
- * 
- * @OpenApi\Tag(
- *     name="User Management",
- *     description="User management and profile endpoints"
+ * @OA\Tag(
+ *     name="Employer",
+ *     description="Employer-specific job management endpoints"
+ * )
+ * @OA\Tag(
+ *     name="Admin",
+ *     description="Administrative endpoints for platform management"
+ * )
+ * @OA\Tag(
+ *     name="Users",
+ *     description="User management and profile operations"
  * )
  */
 abstract class Controller

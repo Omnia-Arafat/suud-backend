@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Job;
+use App\Models\JobListing;
 use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +20,7 @@ class EmployeeDashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             $stats = [
                 'applications' => [
                     'total' => $user->applications()->count(),
@@ -31,10 +31,10 @@ class EmployeeDashboardController extends Controller
                     'this_month' => $user->applications()->whereMonth('created_at', now()->month)->count(),
                 ],
                 'jobs' => [
-                    'available' => Job::where('status', 'active')->count(),
+                    'available' => JobListing::where('status', 'active')->count(),
                     'applied_to' => $user->applications()->count(),
-                    'new_today' => Job::where('status', 'active')->whereDate('created_at', today())->count(),
-                    'matching_specialization' => Job::where('status', 'active')
+                    'new_today' => JobListing::where('status', 'active')->whereDate('created_at', today())->count(),
+                    'matching_specialization' => JobListing::where('status', 'active')
                         ->where('title', 'like', '%' . $user->specialization . '%')
                         ->orWhere('description', 'like', '%' . $user->specialization . '%')
                         ->count(),
@@ -55,21 +55,21 @@ class EmployeeDashboardController extends Controller
                 ->get();
 
             // Recommended jobs based on specialization
-            $recommended_jobs = Job::where('status', 'active')
+            $recommended_jobs = JobListing::where('status', 'active')
                 ->where(function($query) use ($user) {
                     $query->where('title', 'like', '%' . $user->specialization . '%')
                           ->orWhere('description', 'like', '%' . $user->specialization . '%')
                           ->orWhere('requirements', 'like', '%' . $user->specialization . '%');
                 })
-                ->whereNotIn('id', $user->applications()->pluck('job_id'))
+                ->whereNotIn('id', $user->applications()->pluck('job_listing_id'))
                 ->with(['company.user'])
                 ->latest()
                 ->take(5)
                 ->get();
 
             // Latest job opportunities
-            $latest_jobs = Job::where('status', 'active')
-                ->whereNotIn('id', $user->applications()->pluck('job_id'))
+            $latest_jobs = JobListing::where('status', 'active')
+                ->whereNotIn('id', $user->applications()->pluck('job_listing_id'))
                 ->with(['company.user'])
                 ->latest()
                 ->take(8)
@@ -141,8 +141,8 @@ class EmployeeDashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            $query = Job::where('status', 'active')
-                        ->whereNotIn('id', $user->applications()->pluck('job_id'))
+            $query = JobListing::where('status', 'active')
+                        ->whereNotIn('id', $user->applications()->pluck('job_listing_id'))
                         ->with(['company.user']);
 
             // Apply filters
@@ -169,7 +169,7 @@ class EmployeeDashboardController extends Controller
             // Sort by relevance to user's specialization if no specific sorting
             if (!$request->has('sort') && !empty($user->specialization)) {
                 $query->orderByRaw(
-                    "CASE 
+                    "CASE
                         WHEN title LIKE '%{$user->specialization}%' THEN 1
                         WHEN description LIKE '%{$user->specialization}%' THEN 2
                         WHEN requirements LIKE '%{$user->specialization}%' THEN 3
@@ -202,7 +202,7 @@ class EmployeeDashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             $request->validate([
                 'name' => 'sometimes|required|string|max:255',
                 'specialization' => 'sometimes|required|string|max:255',
@@ -224,7 +224,7 @@ class EmployeeDashboardController extends Controller
                 if ($user->avatar_path) {
                     Storage::delete($user->avatar_path);
                 }
-                
+
                 $avatarPath = $request->file('avatar')->store('avatars', 'public');
                 $updateData['avatar_path'] = $avatarPath;
             }
@@ -235,7 +235,7 @@ class EmployeeDashboardController extends Controller
                 if ($user->cv_path) {
                     Storage::delete($user->cv_path);
                 }
-                
+
                 $cvPath = $request->file('cv')->store('cvs', 'public');
                 $updateData['cv_path'] = $cvPath;
             }
@@ -305,7 +305,7 @@ class EmployeeDashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -358,7 +358,7 @@ class EmployeeDashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             $stats = [
                 'monthly_applications' => [],
                 'status_breakdown' => [
@@ -377,7 +377,7 @@ class EmployeeDashboardController extends Controller
                     ->whereYear('created_at', $date->year)
                     ->whereMonth('created_at', $date->month)
                     ->count();
-                
+
                 $stats['monthly_applications'][] = [
                     'month' => $date->format('M Y'),
                     'applications' => $count
@@ -392,6 +392,99 @@ class EmployeeDashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load application statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get saved jobs for employee
+     */
+    public function savedJobs(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            // For now, return empty array since we don't have a saved_jobs table yet
+            // This is a placeholder implementation
+            $savedJobs = collect([]);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'jobs' => $savedJobs,
+                    'pagination' => [
+                        'current_page' => 1,
+                        'last_page' => 1,
+                        'per_page' => $request->get('per_page', 15),
+                        'total' => 0,
+                        'from' => null,
+                        'to' => null,
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load saved jobs',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save a job for employee
+     */
+    public function saveJob(Request $request)
+    {
+        try {
+            $request->validate([
+                'job_id' => 'required|integer|exists:job_listings,id'
+            ]);
+
+            $user = Auth::user();
+
+            // For now, return success since we don't have a saved_jobs table yet
+            // This is a placeholder implementation
+            return response()->json([
+                'success' => true,
+                'message' => 'Job saved successfully',
+                'data' => [
+                    'job_id' => $request->job_id,
+                    'saved' => true
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save job',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove saved job for employee
+     */
+    public function removeSavedJob($jobId)
+    {
+        try {
+            $user = Auth::user();
+
+            // For now, return success since we don't have a saved_jobs table yet
+            // This is a placeholder implementation
+            return response()->json([
+                'success' => true,
+                'message' => 'Job removed from saved list',
+                'data' => [
+                    'job_id' => $jobId,
+                    'saved' => false
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove saved job',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ApplicationController;
 use App\Http\Controllers\Dashboard\AdminDashboardController;
 use App\Http\Controllers\Dashboard\EmployeeDashboardController;
 use App\Http\Controllers\Dashboard\EmployerDashboardController;
+use App\Http\Controllers\SystemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,13 +23,7 @@ use App\Http\Controllers\Dashboard\EmployerDashboardController;
 */
 
 // Health check
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'OK',
-        'message' => 'SU\'UD API is running',
-        'timestamp' => now()->toISOString()
-    ]);
-});
+Route::get('/health', [SystemController::class, 'health']);
 
 // Authentication routes
 Route::prefix('auth')->group(function () {
@@ -91,106 +86,17 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/jobs', [JobController::class, 'index']);
 Route::get('/jobs/filters', [JobController::class, 'filters']);
 Route::get('/jobs/stats', [JobController::class, 'stats']);
+Route::get('/jobs/recent', [JobController::class, 'recent']);
 Route::get('/jobs/{job:slug}', [JobController::class, 'show']);
 
 // Public routes
 Route::prefix('public')->group(function () {
     // Add any public endpoints here
-    Route::get('/info', function () {
-        return response()->json([
-            'app_name' => config('app.name'),
-            'version' => '1.0.0',
-            'description' => 'SU\'UD Project API'
-        ]);
-    });
+    Route::get('/info', [SystemController::class, 'info']);
 });
 
 // Contact form endpoint
-Route::post('/contact', function (Request $request) {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255',
-        'subject' => 'required|string|max:255',
-        'message' => 'required|string|max:5000'
-    ]);
-
-    try {
-        // Log the contact form submission
-        \Log::info('Contact form submission', [
-            'name' => $request->name,
-            'email' => $request->email,
-            'subject' => $request->subject,
-            'message' => $request->message,
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'timestamp' => now()
-        ]);
-
-        // Send email notification to admin
-        $adminEmail = 'RSL111@hotmail.com';
-        $emailData = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'subject' => $request->subject,
-            'message' => $request->message,
-            'ip' => $request->ip(),
-            'timestamp' => now()->format('Y-m-d H:i:s')
-        ];
-
-        // Send email using Laravel Mail
-        \Mail::send([], [], function ($mail) use ($emailData, $adminEmail) {
-            $mail->to($adminEmail)
-                ->subject('New Contact Form Submission - ' . $emailData['subject'])
-                ->html(
-                    '<h2>New Contact Form Submission</h2>' .
-                    '<p><strong>Name:</strong> ' . htmlspecialchars($emailData['name']) . '</p>' .
-                    '<p><strong>Email:</strong> ' . htmlspecialchars($emailData['email']) . '</p>' .
-                    '<p><strong>Subject:</strong> ' . htmlspecialchars($emailData['subject']) . '</p>' .
-                    '<p><strong>Message:</strong></p>' .
-                    '<div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0;">' .
-                    nl2br(htmlspecialchars($emailData['message'])) .
-                    '</div>' .
-                    '<hr>' .
-                    '<p><small><strong>Submitted:</strong> ' . $emailData['timestamp'] . '</small></p>' .
-                    '<p><small><strong>IP Address:</strong> ' . htmlspecialchars($emailData['ip']) . '</small></p>'
-                );
-        });
-
-        // Send auto-reply to user
-        \Mail::send([], [], function ($mail) use ($emailData) {
-            $mail->to($emailData['email'])
-                ->subject('Thank you for contacting SU\'UD Platform')
-                ->html(
-                    '<h2>Thank you for contacting us!</h2>' .
-                    '<p>Dear ' . htmlspecialchars($emailData['name']) . ',</p>' .
-                    '<p>We have received your message and will get back to you within 24-48 hours.</p>' .
-                    '<p><strong>Your message:</strong></p>' .
-                    '<div style="background-color: #f0f8ff; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #4f46e5;">' .
-                    '<strong>Subject:</strong> ' . htmlspecialchars($emailData['subject']) . '<br><br>' .
-                    nl2br(htmlspecialchars($emailData['message'])) .
-                    '</div>' .
-                    '<p>Best regards,<br>The SU\'UD Team</p>' .
-                    '<hr>' .
-                    '<p><small>This is an automated message. Please do not reply to this email.</small></p>'
-                );
-        });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Thank you for your message. We will get back to you soon!'
-        ]);
-    } catch (\Exception $e) {
-        \Log::error('Contact form error', [
-            'error' => $e->getMessage(),
-            'request_data' => $request->all()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'There was an error sending your message. Please try again later.'
-        ], 500);
-    }
-});
+Route::post('/contact', [SystemController::class, 'contact']);
 
 // Company-related API endpoints
 Route::get('/companies', function () {
@@ -219,7 +125,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/dashboard', [AdminDashboardController::class, 'dashboard']);
     Route::get('/users', [AdminDashboardController::class, 'users']);
     Route::patch('/users/{user}/status', [AdminDashboardController::class, 'updateUserStatus']);
+    
+    // Job management
     Route::get('/jobs', [AdminDashboardController::class, 'jobs']);
+    Route::get('/jobs/{job}/details', [AdminDashboardController::class, 'jobDetails']);
+    Route::patch('/jobs/{job}/approve', [AdminDashboardController::class, 'approveJob']);
+    Route::patch('/jobs/{job}/decline', [AdminDashboardController::class, 'declineJob']);
+    
     Route::get('/applications', [AdminDashboardController::class, 'applications']);
     Route::get('/contacts', [AdminDashboardController::class, 'contacts']);
     Route::get('/analytics', [AdminDashboardController::class, 'analytics']);
@@ -234,6 +146,9 @@ Route::middleware(['auth:sanctum', 'employee'])->prefix('employee')->group(funct
     Route::patch('/profile', [EmployeeDashboardController::class, 'updateProfile']);
     Route::patch('/password', [EmployeeDashboardController::class, 'changePassword']);
     Route::get('/stats', [EmployeeDashboardController::class, 'applicationStats']);
+    Route::get('/saved-jobs', [EmployeeDashboardController::class, 'savedJobs']);
+    Route::post('/saved-jobs', [EmployeeDashboardController::class, 'saveJob']);
+    Route::delete('/saved-jobs/{jobId}', [EmployeeDashboardController::class, 'removeSavedJob']);
 });
 
 // Employer Dashboard Routes

@@ -9,49 +9,46 @@ use Illuminate\Http\Request;
 class JobController extends Controller
 {
     /**
-     * @OpenApi\Get(
+     * @OA\Get(
      *     path="/api/jobs",
      *     tags={"Jobs"},
      *     summary="Get all job listings",
      *     description="Retrieve a paginated list of active job listings with optional filtering",
-     *     @OpenApi\Parameter(
+     *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         description="Search term for job title or description",
      *         required=false,
-     *         @OpenApi\Schema(type="string")
+     *         @OA\Schema(type="string")
      *     ),
-     *     @OpenApi\Parameter(
+     *     @OA\Parameter(
      *         name="location",
      *         in="query",
      *         description="Filter by job location",
      *         required=false,
-     *         @OpenApi\Schema(type="string")
+     *         @OA\Schema(type="string")
      *     ),
-     *     @OpenApi\Parameter(
+     *     @OA\Parameter(
      *         name="job_type",
      *         in="query",
      *         description="Filter by job type",
      *         required=false,
-     *         @OpenApi\Schema(type="string", enum={"full_time", "part_time", "contract", "internship"})
+     *         @OA\Schema(type="string", enum={"full_time", "part_time", "contract", "internship"})
      *     ),
-     *     @OpenApi\Parameter(
+     *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page (max 50)",
      *         required=false,
-     *         @OpenApi\Schema(type="integer", example=15)
+     *         @OA\Schema(type="integer", example=15)
      *     ),
-     *     @OpenApi\Response(
+     *     @OA\Response(
      *         response=200,
      *         description="Jobs retrieved successfully",
-     *         @OpenApi\MediaType(
-     *             mediaType="application/json",
-     *             @OpenApi\Schema(
-     *                 type="object",
-     *                 @OpenApi\Property(property="success", type="boolean", example=true),
-     *                 @OpenApi\Property(property="data", type="object")
-     *             )
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
      *         )
      *     )
      * )
@@ -111,6 +108,38 @@ class JobController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/jobs/{job:slug}",
+     *     tags={"Jobs"},
+     *     summary="Get job details",
+     *     description="Get detailed information for a single job by slug",
+     *     @OA\Parameter(
+     *         name="job:slug",
+     *         in="path",
+     *         required=true,
+     *         description="Job slug identifier",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Job details retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Job not found or no longer available",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Job not found or no longer available")
+     *         )
+     *     )
+     * )
+     *
      * Get detailed information for a single job
      *
      * @param JobListing $job
@@ -141,6 +170,29 @@ class JobController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/jobs/filters",
+     *     tags={"Jobs"},
+     *     summary="Get job filter options",
+     *     description="Get available filter options for job listings",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Filter options retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="job_types", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="experience_levels", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="categories", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="locations", type="array", @OA\Items(type="string"))
+     *             )
+     *         )
+     *     )
+     * )
+     *
      * Get available filter options for jobs
      *
      * @return \Illuminate\Http\JsonResponse
@@ -164,6 +216,27 @@ class JobController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/jobs/stats",
+     *     tags={"Jobs"},
+     *     summary="Get job statistics",
+     *     description="Get job and company statistics for public display",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Statistics retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="total_active_jobs", type="integer", example=450),
+     *                 @OA\Property(property="total_companies", type="integer", example=120)
+     *             )
+     *         )
+     *     )
+     * )
+     *
      * Get job statistics for public display
      *
      * @return \Illuminate\Http\JsonResponse
@@ -186,6 +259,116 @@ class JobController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/jobs/recent",
+     *     tags={"Jobs"},
+     *     summary="Get recent jobs",
+     *     description="Get recent job listings for homepage display",
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Number of jobs to return (max 10)",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=4, maximum=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recent jobs retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="jobs", type="array", @OA\Items())
+     *             )
+     *         )
+     *     )
+     * )
+     *
+     * Get recent jobs for homepage display
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function recent(Request $request)
+    {
+        $limit = min($request->get('limit', 4), 10); // Max 10 recent jobs
+        
+        $jobs = JobListing::active()
+            ->with(['company:id,company_name,logo_path'])
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'jobs' => $jobs
+            ]
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/employer/jobs",
+     *     tags={"Employer"},
+     *     summary="Get Employer's Job Listings",
+     *     description="Get all job listings posted by the authenticated employer's company",
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by job status",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"pending", "active", "declined", "closed"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search in job title and description",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page (max 50)",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Employer jobs retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="jobs", type="array", @OA\Items()),
+     *                 @OA\Property(
+     *                     property="pagination",
+     *                     type="object",
+     *                     @OA\Property(property="current_page", type="integer"),
+     *                     @OA\Property(property="last_page", type="integer"),
+     *                     @OA\Property(property="per_page", type="integer"),
+     *                     @OA\Property(property="total", type="integer")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Access denied - Employer role required",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Only employers can access job listings")
+     *         )
+     *     )
+     * )
+     *
      * Get jobs for the authenticated employer
      *
      * @param Request $request
@@ -248,36 +431,33 @@ class JobController extends Controller
     }
 
     /**
-     * @OpenApi\Post(
+     * @OA\Post(
      *     path="/api/jobs",
      *     tags={"Jobs"},
      *     summary="Create a new job listing",
      *     description="Create a new job listing (employers only)",
-     *     security={"sanctum": {}},
-     *     @OpenApi\RequestBody(
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
      *         required=true,
-     *         @OpenApi\MediaType(
-     *             mediaType="application/json",
-     *             @OpenApi\Schema(
-     *                 type="object",
-     *                 required={"title", "description", "requirements", "location", "job_type"},
-     *                 @OpenApi\Property(property="title", type="string", example="Senior Software Developer"),
-     *                 @OpenApi\Property(property="description", type="string", example="We are looking for a passionate developer..."),
-     *                 @OpenApi\Property(property="requirements", type="string", example="5+ years experience with React..."),
-     *                 @OpenApi\Property(property="location", type="string", example="Riyadh, Saudi Arabia"),
-     *                 @OpenApi\Property(property="job_type", type="string", enum={"full-time", "part-time", "contract", "internship"}),
-     *                 @OpenApi\Property(property="experience_level", type="string", enum={"entry", "mid", "senior", "executive"}),
-     *                 @OpenApi\Property(property="salary_min", type="number", example=5000),
-     *                 @OpenApi\Property(property="salary_max", type="number", example=8000),
-     *                 @OpenApi\Property(property="category", type="string", example="Technology"),
-     *                 @OpenApi\Property(property="application_deadline", type="string", format="date"),
-     *                 @OpenApi\Property(property="positions_available", type="integer", example=1),
-     *                 @OpenApi\Property(property="skills", type="array", @OpenApi\Items(type="string")),
-     *                 @OpenApi\Property(property="status", type="string", enum={"draft", "pending"}, example="pending")
-     *             )
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"title", "description", "requirements", "location", "job_type"},
+     *             @OA\Property(property="title", type="string", example="Senior Software Developer"),
+     *             @OA\Property(property="description", type="string", example="We are looking for a passionate developer..."),
+     *             @OA\Property(property="requirements", type="string", example="5+ years experience with React..."),
+     *             @OA\Property(property="location", type="string", example="Riyadh, Saudi Arabia"),
+     *             @OA\Property(property="job_type", type="string", enum={"full-time", "part-time", "contract", "internship"}),
+     *             @OA\Property(property="experience_level", type="string", enum={"entry", "mid", "senior", "executive"}),
+     *             @OA\Property(property="salary_min", type="number", example=5000),
+     *             @OA\Property(property="salary_max", type="number", example=8000),
+     *             @OA\Property(property="category", type="string", example="Technology"),
+     *             @OA\Property(property="application_deadline", type="string", format="date"),
+     *             @OA\Property(property="positions_available", type="integer", example=1),
+     *             @OA\Property(property="skills", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="status", type="string", enum={"draft", "pending"}, example="pending")
      *         )
      *     ),
-     *     @OpenApi\Response(
+     *     @OA\Response(
      *         response=201,
      *         description="Job created successfully"
      *     )

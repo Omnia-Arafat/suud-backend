@@ -91,7 +91,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:employee,employer',
+            'role' => 'required|in:employee,employer,admin',
             'phone' => 'nullable|string|max:20',
             'location' => 'nullable|string|max:255',
             // Employee specific fields
@@ -107,8 +107,8 @@ class AuthController extends Controller
             'password.required' => 'Password is required',
             'password.min' => 'Password must be at least 8 characters',
             'password.confirmed' => 'Password confirmation does not match',
-            'role.required' => 'Please select your role (employee or employer)',
-            'role.in' => 'Role must be either employee or employer',
+            'role.required' => 'Please select your role (employee, employer, or admin)',
+            'role.in' => 'Role must be employee, employer, or admin',
             'company_name.required_if' => 'Company name is required for employers',
         ]);
 
@@ -145,13 +145,22 @@ class AuthController extends Controller
         // Load relationships for response
         $user->load('company');
 
+        // Determine redirect URL based on user role
+        $redirectUrl = match($user->role) {
+            'admin' => '/admin/dashboard',
+            'employer' => '/employer/dashboard', 
+            'employee' => '/employee/dashboard',
+            default => '/dashboard'
+        };
+
         return response()->json([
             'success' => true,
             'message' => 'User registered successfully',
             'data' => [
                 'user' => $user,
                 'token' => $token,
-                'token_type' => 'Bearer'
+                'token_type' => 'Bearer',
+                'redirect_url' => $redirectUrl
             ]
         ], Response::HTTP_CREATED);
     }
@@ -262,13 +271,22 @@ class AuthController extends Controller
             $user->load('company');
         }
 
+        // Determine redirect URL based on user role
+        $redirectUrl = match($user->role) {
+            'admin' => '/admin/dashboard',
+            'employer' => '/employer/dashboard', 
+            'employee' => '/employee/dashboard',
+            default => '/dashboard'
+        };
+
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
             'data' => [
                 'user' => $user,
                 'token' => $token,
-                'token_type' => 'Bearer'
+                'token_type' => 'Bearer',
+                'redirect_url' => $redirectUrl
             ]
         ]);
     }
